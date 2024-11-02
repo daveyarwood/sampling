@@ -62,7 +62,7 @@ echo
 
 mkdir -p "$sample_pack_dir"
 
-mp3_files="$(shuf -n16 < "$all_mp3_files")"
+mp3_files="$(shuf -n16 "$all_mp3_files")"
 sample_length_s=10
 
 sample_number=0
@@ -76,7 +76,7 @@ echo "$mp3_files" | while read -r mp3_file; do
 
   # Handle the edge case where the mp3 is shorter than the sample length.
   start=0
-  end="$sample_length_s"
+  end="$duration_s"
 
   if [[ "$duration_s" -gt "$sample_length_s" ]]; then
     start="$(shuf -i "0-$((duration_s - sample_length_s))" -n1)"
