@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $0 OUTPUT_DIR"
+  exit 1
+fi
+
+output_dir="$1"
+
+# Delete any empty directories inside the output directory. (This is to make it
+# easier on myself while developing this script. I can run the script as many
+# times as I want and not end up with a bunch of empty directories.)
+if [[ -d "$output_dir" ]]; then
+  find "$output_dir" -maxdepth 1 -type d -empty -exec 'rm' '-rf' '{}' ';'
+fi
+
+for cmd in sox soxi; do
+  if ! command -v "$cmd" > /dev/null; then
+    echo "This script requires $cmd to be on your PATH."
+    exit 1
+  fi
+done
+
+words="/usr/share/dict/american-english"
+if ! [[ -f "$words" ]]; then
+  echo "This script requires $words to exist."
+  exit 1
+fi
+
+random_word="$(shuf -n1 "$words")"
+sample_pack_dir="$output_dir/$(date '+%Y%m%d%H%M%S')-$random_word"
+
+# NOTE: This is all specific to where I have things stored on my computer. If
+# you're reading this and you're not me, just know that this script will not
+# work for you without modifications. :)
+
+# I'm not sure if this directory will be stable. May need to do something more
+# sophisticated eventually, but for now, this works.
+home_dir="/run/user/1000/gvfs/smb-share:server=space-garbage.local,share=home"
+music_dir="$home_dir/Music/library"
+
+# Because this is a mounted share and there are so many files, it takes several
+# minutes to produce the full list of mp3 files. The list doesn't change much,
+# so we'll only fetch it if the list doesn't already exist.
+#
+# To refresh the list, delete this file and the script will recreate it.
+all_mp3_files="$(dirname "$0")/mp3-files.txt"
+
+if ! [[ -f "$all_mp3_files" ]]; then
+  echo "Creating mp3 file list. (This will take a while...)"
+  sleep 1 # Give the user a second to read the message above
+  find "$music_dir" -type f -name '*.mp3' | tee "$all_mp3_files"
+  echo
+fi
+
+echo "--- $all_mp3_files ---"
+echo "last updated: $(date -r "$all_mp3_files")"
+echo "mp3 files: $(wc -l < "$all_mp3_files")"
+echo
+
+mkdir -p "$sample_pack_dir"
+
+mp3_files="$(shuf -n16 < "$all_mp3_files")"
+sample_length_s=10
+
+sample_number=0
+
+echo "$mp3_files" | while read -r mp3_file; do
+  ((++sample_number))
+  sample_number_padded="$(printf '%02g' "$sample_number")"
+
+  duration_s_float="$(soxi -D "$mp3_file")"
+  duration_s="${duration_s_float%.*}"
+
+  start="$(shuf -i "0-$((duration_s - sample_length_s))" -n1)"
+  end="$((start + sample_length_s))"
+  sox \
+    --norm "$mp3_file" \
+    "$sample_pack_dir/$sample_number_padded.wav" \
+    trim "$start" "$sample_length_s"
+
+  start_m="$((start / 60))"
+  start_s="$((start % 60))"
+  start_time="$start_m:$(printf '%02g' "$start_s")"
+  end_m="$((end / 60))"
+  end_s="$((end % 60))"
+  end_time="$end_m:$(printf '%02g' "$end_s")"
+
+  echo -e "$sample_number_padded\t$mp3_file\t$start_time - $end_time" \
+    | tee -a "$sample_pack_dir/info.txt"
+done
+
+echo
+echo "Created sample pack: $sample_pack_dir"
