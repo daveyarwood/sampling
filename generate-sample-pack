@@ -74,8 +74,15 @@ echo "$mp3_files" | while read -r mp3_file; do
   duration_s_float="$(soxi -D "$mp3_file")"
   duration_s="${duration_s_float%.*}"
 
-  start="$(shuf -i "0-$((duration_s - sample_length_s))" -n1)"
-  end="$((start + sample_length_s))"
+  # Handle the edge case where the mp3 is shorter than the sample length.
+  start=0
+  end="$sample_length_s"
+
+  if [[ "$duration_s" -gt "$sample_length_s" ]]; then
+    start="$(shuf -i "0-$((duration_s - sample_length_s))" -n1)"
+    end="$((start + sample_length_s))"
+  fi
+
   sox \
     --norm "$mp3_file" \
     "$sample_pack_dir/$sample_number_padded.wav" \
