@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+if [[ $# -ne 2 ]]; then
+  echo "Usage: $0 INPUT_DIR OUTPUT_DIR"
+  exit 1
+fi
+
+if ! command -v brr_decoder >/dev/null; then
+  echo "spc_decoder (https://github.com/Optiroc/BRRtools) must be on the PATH"
+  exit 1
+fi
+
+input_dir="$1"
+output_dir="$2"
+
+find "$input_dir" -type f -name '*.spc' | while read -r spc_file; do
+  spc_name="$(basename "$spc_file" ".spc")"
+
+  echo -e "    $spc_name.spc\n"
+
+  # Make a subdirectory for each SPC file we're extracting.
+  mkdir -p "$output_dir/$spc_name"
+
+  # Various weird errors can happen when trying to do this. If they do, we just
+  # want to print the error and move on, with the goal of extracting as many
+  # samples as we can.
+  #
+  # The repetition of `$spc_name` here is intentional. The first one is the
+  # subdirectory, and the second one is the filename prefix.
+  spc_decoder -f1 -l99 -m2 "$spc_file" "$output_dir/$spc_name/$spc_name" || true
+
+  # The above command generates empty files for any empty samples in the SPC.
+  # This removes the empty files.
+  find "$output_dir/$spc_name" \
+    -type f \
+    -name "*.wav" \
+    -empty \
+    -exec 'rm' '{}' ';'
+
+  # Apart from that, there are also some 2-second silent files that are
+  # generated, for some reason. This removes those.
+  find "$output_dir/$spc_name" \
+    -type f \
+    -name "*.wav" \
+    | while read -r wav_file; do
+      max_amplitude="$(sox "$wav_file" -n stat 2>&1 \
+                        | grep 'Maximum amplitude' \
+                        | cut -d':' -f2 \
+                        | tr -d ' ')"
+      if [[ "$(echo "$max_amplitude < 0.01" | bc -l)" -eq 1 ]]; then
+        rm "$wav_file"
+      fi
+  done
+done
