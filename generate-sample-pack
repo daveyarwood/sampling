@@ -62,41 +62,54 @@ echo
 
 mkdir -p "$sample_pack_dir"
 
-mp3_files="$(shuf -n16 "$all_mp3_files")"
+num_songs=4
+num_samples_per_song=4
+
+mp3_files="$(shuf -n "$num_songs" "$all_mp3_files")"
 sample_length_s=10
 
-sample_number=0
+song_number=0
+
+pad_number=0
 
 echo "$mp3_files" | while read -r mp3_file; do
-  ((++sample_number))
-  sample_number_padded="$(printf '%02g' "$sample_number")"
+  ((++song_number))
 
-  duration_s_float="$(soxi -D "$mp3_file")"
-  duration_s="${duration_s_float%.*}"
+  sample_number=0
 
-  # Handle the edge case where the mp3 is shorter than the sample length.
-  start=0
-  end="$duration_s"
+  while [[ "$sample_number" -lt "$num_samples_per_song" ]]; do
+    ((++sample_number))
+    ((++pad_number))
 
-  if [[ "$duration_s" -gt "$sample_length_s" ]]; then
-    start="$(shuf -i "0-$((duration_s - sample_length_s))" -n1)"
-    end="$((start + sample_length_s))"
-  fi
+    pad_number_padded="$(printf '%02g' "$pad_number")"
 
-  sox \
-    --norm "$mp3_file" \
-    "$sample_pack_dir/$sample_number_padded.wav" \
-    trim "$start" "$sample_length_s"
+    duration_s_float="$(soxi -D "$mp3_file")"
+    duration_s="${duration_s_float%.*}"
 
-  start_m="$((start / 60))"
-  start_s="$((start % 60))"
-  start_time="$start_m:$(printf '%02g' "$start_s")"
-  end_m="$((end / 60))"
-  end_s="$((end % 60))"
-  end_time="$end_m:$(printf '%02g' "$end_s")"
+    # Handle the edge case where the mp3 is shorter than the sample length.
+    start=0
+    end="$duration_s"
 
-  echo -e "$sample_number_padded\t$mp3_file\t$start_time - $end_time" \
-    | tee -a "$sample_pack_dir/info.txt"
+    if [[ "$duration_s" -gt "$sample_length_s" ]]; then
+      start="$(shuf -i "0-$((duration_s - sample_length_s))" -n1)"
+      end="$((start + sample_length_s))"
+    fi
+
+    sox \
+      --norm "$mp3_file" \
+      "$sample_pack_dir/$pad_number_padded.wav" \
+      trim "$start" "$sample_length_s"
+
+    start_m="$((start / 60))"
+    start_s="$((start % 60))"
+    start_time="$start_m:$(printf '%02g' "$start_s")"
+    end_m="$((end / 60))"
+    end_s="$((end % 60))"
+    end_time="$end_m:$(printf '%02g' "$end_s")"
+
+    echo -e "$pad_number_padded\t$mp3_file\t$start_time - $end_time" \
+      | tee -a "$sample_pack_dir/info.txt"
+    done
 done
 
 echo
