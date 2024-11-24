@@ -65,7 +65,11 @@ mkdir -p "$sample_pack_dir"
 num_songs=4
 num_samples_per_song=4
 
-mp3_files="$(shuf -n "$num_songs" "$all_mp3_files")"
+random_mp3_files() {
+  shuf -n "$1" "$all_mp3_files"
+}
+
+mp3_files="$(random_mp3_files "$num_songs")"
 sample_length_s=10
 
 song_number=0
@@ -75,25 +79,45 @@ pad_number=0
 echo "$mp3_files" | while read -r mp3_file; do
   ((++song_number))
 
+  song_duration_s_float="$(soxi -D "$mp3_file")"
+  song_duration_s="${song_duration_s_float%.*}"
+
+  min_duration_s="$((sample_length_s * num_samples_per_song))"
+
+  while [[ "$song_duration_s" -lt "$min_duration_s" ]]; do
+    echo "Song is too short: $mp3_file"
+    echo "Selecting another song..."
+
+    mp3_file="$(random_mp3_files 1)"
+    duration_s_float="$(soxi -D "$mp3_file")"
+    song_duration_s="${duration_s_float%.*}"
+  done
+
+  # In order to maximize the diversity of the samples, avoid having overlapping
+  # samples (it's still technically possible), and order the samples
+  # chronologically, we evenly space the start/end times out across the duration
+  # of the song.
+  interval_s="$((song_duration_s / num_samples_per_song))"
+
   sample_number=0
 
   while [[ "$sample_number" -lt "$num_samples_per_song" ]]; do
-    ((++sample_number))
     ((++pad_number))
 
     pad_number_padded="$(printf '%02g' "$pad_number")"
 
-    duration_s_float="$(soxi -D "$mp3_file")"
-    duration_s="${duration_s_float%.*}"
+    # Pick a random start point between this "interval point" and the next.
+    range_start="$((interval_s * sample_number))"
+    range_end="$((interval_s * (sample_number + 1)))"
 
-    # Handle the edge case where the mp3 is shorter than the sample length.
-    start=0
-    end="$duration_s"
-
-    if [[ "$duration_s" -gt "$sample_length_s" ]]; then
-      start="$(shuf -i "0-$((duration_s - sample_length_s))" -n1)"
-      end="$((start + sample_length_s))"
+    # Ensure that we don't pick a start point that would result in the sample
+    # exceeding the length of the song.
+    if [[ "$((range_end + sample_length_s))" -gt "$song_duration_s" ]]; then
+      range_end="$((song_duration_s - sample_length_s))"
     fi
+
+    start="$(shuf -i "$range_start-$range_end" -n1)"
+    end="$((start + sample_length_s))"
 
     sox \
       --norm "$mp3_file" \
@@ -109,7 +133,9 @@ echo "$mp3_files" | while read -r mp3_file; do
 
     echo -e "$pad_number_padded\t$mp3_file\t$start_time - $end_time" \
       | tee -a "$sample_pack_dir/info.txt"
-    done
+
+    ((++sample_number))
+  done
 done
 
 echo
