@@ -5,7 +5,7 @@ interface AuthSetupProps {
   onAuthSuccess: () => void;
 }
 
-function AuthSetup({ clientId, onAuthSuccess }: AuthSetupProps) {
+const AuthSetup = ({ clientId, onAuthSuccess }: AuthSetupProps) => {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +86,6 @@ function AuthSetup({ clientId, onAuthSuccess }: AuthSetupProps) {
       </div>
     </div>
   );
-}
+};
 
 export default AuthSetup;

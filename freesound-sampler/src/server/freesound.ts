@@ -9,6 +9,10 @@ const CLIENT_ID = process.env.FREESOUND_CLIENT_ID;
 const CLIENT_SECRET = process.env.FREESOUND_CLIENT_SECRET;
 const TOKEN_FILE_PATH = path.join(__dirname, '..', '..', 'token.json');
 
+if (!CLIENT_ID || !CLIENT_SECRET) {
+  throw new Error('Freesound Client ID or Secret is not configured in the environment variables.');
+}
+
 interface TokenData {
   access_token: string;
   refresh_token: string;
@@ -16,20 +20,20 @@ interface TokenData {
 
 // --- Token File Management ---
 
-async function readToken(): Promise<TokenData | null> {
+const readToken = async (): Promise<TokenData | null> => {
   try {
     const data = await fsPromises.readFile(TOKEN_FILE_PATH, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
     return null; // File doesn't exist or is invalid
   }
-}
+};
 
-async function writeToken(tokenData: TokenData): Promise<void> {
+const writeToken = async (tokenData: TokenData): Promise<void> => {
   await fsPromises.writeFile(TOKEN_FILE_PATH, JSON.stringify(tokenData, null, 2), 'utf-8');
-}
+};
 
-export function hasToken(): boolean {
+export const hasToken = (): boolean => {
   try {
     // Use synchronous check for the initial auth status endpoint
     require('fs').accessSync(TOKEN_FILE_PATH);
@@ -37,48 +41,42 @@ export function hasToken(): boolean {
   } catch (error) {
     return false;
   }
-}
+};
 
 // --- OAuth2 Logic ---
 
-export async function exchangeCodeForToken(code: string): Promise<void> {
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    throw new Error('Freesound Client ID or Secret is not configured.');
-  }
+export const exchangeCodeForToken = async (code: string): Promise<void> => {
   const response = await axios.post(
     `${FREESOUND_API_URL}/oauth2/access_token/`,
     new URLSearchParams({
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
+      client_id: CLIENT_ID!,
+      client_secret: CLIENT_SECRET!,
       grant_type: 'authorization_code',
       code,
     })
   );
   await writeToken(response.data);
   console.log('Successfully exchanged code for token and created token.json.');
-}
+};
 
-export async function refreshAccessToken(): Promise<void> {
+export const refreshAccessToken = async (): Promise<void> => {
   const currentToken = await readToken();
   if (!currentToken || !currentToken.refresh_token) {
     throw new Error('No refresh token available.');
-  }
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    throw new Error('Freesound Client ID or Secret is not configured.');
   }
 
   const response = await axios.post(
     `${FREESOUND_API_URL}/oauth2/access_token/`,
     new URLSearchParams({
-      client_id: CLIENT_ID,
-      client_secret: CLIENT_SECRET,
+      client_id: CLIENT_ID!,
+      client_secret: CLIENT_SECRET!,
       grant_type: 'refresh_token',
       refresh_token: currentToken.refresh_token,
     })
   );
   await writeToken(response.data);
   console.log('Successfully refreshed access token.');
-}
+};
 
 
 // --- API Resource Functions ---
@@ -89,8 +87,7 @@ interface Sound {
   download: string;
 }
 
-export async function searchSounds(query: string): Promise<Sound[]> {
-  if (!CLIENT_SECRET) throw new Error('Freesound Client Secret is not configured.');
+export const searchSounds = async (query: string): Promise<Sound[]> => {
   const searchParams = {
     query,
     token: CLIENT_SECRET,
@@ -101,9 +98,9 @@ export async function searchSounds(query: string): Promise<Sound[]> {
   };
   const response = await axios.get<{ results: Sound[] }>(`${FREESOUND_API_URL}/search/text/`, { params: searchParams });
   return response.data.results.sort(() => 0.5 - Math.random()).slice(0, 4);
-}
+};
 
-export async function downloadSound(sound: Sound): Promise<string> {
+export const downloadSound = async (sound: Sound): Promise<string> => {
   const tokenData = await readToken();
   if (!tokenData || !tokenData.access_token) {
     throw new Error('Not authenticated. Access token is missing.');
@@ -124,4 +121,4 @@ export async function downloadSound(sound: Sound): Promise<string> {
     writer.on('finish', () => resolve(filePath));
     writer.on('error', reject);
   });
-}
+};

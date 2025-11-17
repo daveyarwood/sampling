@@ -1,20 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface Sample {
   url: string;
   name: string;
 }
 
-function SampleGrid() {
+const SampleGrid = () => {
   const [samples, setSamples] = useState<Sample[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const fetchSamples = async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/random-samples');
+      const response = await fetch('/api/random-samples', { signal });
       const data = await response.json();
 
       if (!response.ok) {
@@ -26,22 +33,33 @@ function SampleGrid() {
           url,
           name: `Sample ${index + 1}`,
         }));
-        setSamples(formattedSamples);
-      } else {
-        setSamples([]);
-        setError('No samples found in the response.');
-      }
-    } catch (e: any) {
-      console.error("Failed to fetch samples:", e);
-      setError(e.message);
-      setSamples([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+              setSamples(formattedSamples);
+            } else {
+              setSamples([]);
+              setError('No samples found in the response.');
+            }
+            setLoading(false); // Set loading to false here on success
+          } catch (e: any) {
+            if (e.name === 'AbortError') {
+              console.log('Fetch aborted');
+              return;
+            }
+            console.error("Failed to fetch samples:", e);
+            setError(e.message);
+            setSamples([]);
+            setLoading(false); // Set loading to false here on actual error
+          } finally {
+            abortControllerRef.current = null;
+          }  };
 
   useEffect(() => {
     fetchSamples();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   return (
@@ -71,6 +89,6 @@ function SampleGrid() {
       </div>
     </div>
   );
-}
+};
 
 export default SampleGrid;

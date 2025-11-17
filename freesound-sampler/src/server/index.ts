@@ -5,6 +5,7 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import cors from 'cors';
 import axios from 'axios';
+import * as fsPromises from 'fs/promises';
 import { searchSounds, downloadSound, exchangeCodeForToken, hasToken, refreshAccessToken } from './freesound';
 import { processAudioFile } from './audio';
 
@@ -56,17 +57,17 @@ app.get('/api/random-samples', async (_req: Request, res: Response) => {
       return res.status(404).json({ message: 'No suitable sounds found on Freesound.' });
     }
 
-    let allSampleUrls: string[] = [];
     const numSourceSoundsToProcess = Math.min(foundSounds.length, 4);
+    const soundsToProcess = foundSounds.slice(0, numSourceSoundsToProcess);
 
-    for (let i = 0; i < numSourceSoundsToProcess; i++) {
-      const sound = foundSounds[i];
-      console.log(`Downloading sound: ${sound.name} (ID: ${sound.id})`);
-      const downloadedFilePath = await downloadSound(sound);
-      console.log(`Processing audio file: ${downloadedFilePath}`);
-      const samplesFromThisSource = await processAudioFile(downloadedFilePath);
-      allSampleUrls = allSampleUrls.concat(samplesFromThisSource);
-    }
+    const allSampleUrls = (await Promise.all(
+      soundsToProcess.map(async (sound) => {
+        console.log(`Downloading sound: ${sound.name} (ID: ${sound.id})`);
+        const downloadedFilePath = await downloadSound(sound);
+        console.log(`Processing audio file: ${downloadedFilePath}`);
+        return processAudioFile(downloadedFilePath);
+      })
+    )).flat(); // Use flat to combine arrays of samples
 
     const finalSamples = allSampleUrls.slice(0, 16);
     res.json({ samples: finalSamples });
@@ -100,17 +101,33 @@ const searchWords = ['texture', 'ambient', 'rhythmic', 'noise', 'field', 'synth'
 // Serve static files from the public directory (for samples)
 app.use(express.static('public'));
 
-// Serve static files from the React app
-const clientBuildPath = path.join(__dirname, '../../dist/client');
-app.use(express.static(clientBuildPath));
+// Conditionally serve client build and catch-all in production
+if (process.env.NODE_ENV === 'production') {
+  const clientBuildPath = path.join(__dirname, '../../dist'); // Corrected path
+  app.use(express.static(clientBuildPath));
 
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-app.get('*', (_req: Request, res: Response) => {
-  res.sendFile(path.join(clientBuildPath, 'index.html'));
-});
+  // The "catchall" handler: for any request that doesn't
+  // match one above, send back React's index.html file.
+  app.get('*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
 
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Server listening on port ${port}`);
+
+  // Cleanup public/samples directory on startup
+  const samplesDir = path.join(__dirname, '../../public/samples');
+  try {
+    await fsPromises.rm(samplesDir, { recursive: true, force: true });
+    console.log(`Cleaned up ${samplesDir}`);
+  } catch (error: any) {
+    // Ignore if directory doesn't exist (ENOENT)
+    if (error.code !== 'ENOENT') {
+      console.error(`Error cleaning up samples directory: ${error}`);
+    }
+  }
+  await fsPromises.mkdir(samplesDir, { recursive: true });
+  console.log(`Recreated ${samplesDir}`);
 });

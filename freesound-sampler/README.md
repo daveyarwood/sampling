@@ -127,9 +127,6 @@ freesound-sampler/
 
 ## TODO
 
-* Adhere to my coding standards (see instructions in `.gemini/`)
-* We need to make sure that a bajillion wav files don't accumulate in the
-  `public/samples` directory over time.
 * Provide incremental feedback in the form of a progress bar (e.g.,)
   "Loading sample 3 of 16...") while the samples are downloading.
 * Instead of rendering an `audio` element on the page, render a large ▶️ button

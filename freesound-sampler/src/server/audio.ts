@@ -1,6 +1,6 @@
-import { exec } from 'child_process';
-import path from 'path';
-import fs from 'fs/promises';
+import { exec } from "child_process";
+import path from "path";
+import fs from "fs/promises";
 
 const SAMPLE_LENGTH_S = 10; // Length of each sample in seconds
 const NUM_SAMPLES_PER_SOURCE = 4; // Number of samples to extract from each source audio
@@ -10,7 +10,7 @@ const NUM_SAMPLES_PER_SOURCE = 4; // Number of samples to extract from each sour
  * @param filePath The path to the audio file.
  * @returns A promise that resolves to the duration in seconds.
  */
-async function getAudioDuration(filePath: string): Promise<number> {
+const getAudioDuration = (filePath: string): Promise<number> => {
   return new Promise((resolve, reject) => {
     exec(`soxi -D "${filePath}"`, (error, stdout, stderr) => {
       if (error) {
@@ -20,23 +20,27 @@ async function getAudioDuration(filePath: string): Promise<number> {
       resolve(parseFloat(stdout.trim()));
     });
   });
-}
+};
 
 /**
  * Processes an audio file, chopping it into multiple short samples.
  * @param inputFilePath The path to the input audio file.
  * @returns A promise that resolves to an array of relative paths (URLs) of the generated samples.
  */
-export async function processAudioFile(inputFilePath: string): Promise<string[]> {
+export const processAudioFile = async (
+  inputFilePath: string,
+): Promise<string[]> => {
   const sampleUrls: string[] = [];
   const duration = await getAudioDuration(inputFilePath);
 
   if (duration < SAMPLE_LENGTH_S * NUM_SAMPLES_PER_SOURCE) {
-    console.warn(`Audio file ${inputFilePath} is too short to extract ${NUM_SAMPLES_PER_SOURCE} samples of ${SAMPLE_LENGTH_S}s. Skipping.`);
+    console.warn(
+      `Audio file ${inputFilePath} is too short to extract ${NUM_SAMPLES_PER_SOURCE} samples of ${SAMPLE_LENGTH_S}s. Skipping.`,
+    );
     return [];
   }
 
-  const outputDir = path.join(__dirname, '..', '..', 'public', 'samples');
+  const outputDir = path.join(__dirname, "..", "..", "public", "samples");
   await fs.mkdir(outputDir, { recursive: true });
 
   for (let i = 0; i < NUM_SAMPLES_PER_SOURCE; i++) {
@@ -53,7 +57,9 @@ export async function processAudioFile(inputFilePath: string): Promise<string[]>
       const command = `sox --norm "${inputFilePath}" "${outputFilePath}" trim ${randomStartTime} ${SAMPLE_LENGTH_S}`;
       exec(command, (error, _stdout, stderr) => {
         if (error) {
-          console.error(`Error processing audio file ${inputFilePath}: ${stderr}`);
+          console.error(
+            `Error processing audio file ${inputFilePath}: ${stderr}`,
+          );
           return reject(error);
         }
         resolve();
@@ -67,6 +73,5 @@ export async function processAudioFile(inputFilePath: string): Promise<string[]>
   // Clean up the temporary directory
   await fs.rm(path.dirname(inputFilePath), { recursive: true, force: true });
 
-
   return sampleUrls;
-}
+};

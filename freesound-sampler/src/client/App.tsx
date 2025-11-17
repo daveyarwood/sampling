@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AuthSetup from './AuthSetup';
 import SampleGrid from './SampleGrid';
 
-function App() {
+const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [clientId, setClientId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -34,6 +34,6 @@ function App() {
   } else {
     return <AuthSetup clientId={clientId} onAuthSuccess={checkAuthStatus} />;
   }
-}
+};
 
 export default App;
