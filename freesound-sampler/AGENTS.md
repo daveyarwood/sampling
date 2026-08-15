@@ -79,7 +79,7 @@ npx -y lavish-axi poll .lavish/dashboard.html --agent-reply "<your opening messa
 - **Stats bar** at the top: pending count, completed count, total
 - **Pending section**: expandable collapse panels, one per TODO item. Each shows the description and implementation notes. Each has a "Start cycle" button that queues a prompt via `window.lavish.queuePrompt()`.
 - **Completed section**: a table showing finished items with review notes
-- **Add new TODO** section: a free-text `<textarea>` + button to queue a new TODO suggestion
+- **Add new TODO** section: a free-text `<textarea>` + button to queue a new TODO suggestion. IMPORTANT: the form must NOT use `data-lavish-question` (which deduplicates/overwrites previous unsent answers for the same key) — each suggestion must be independently queued so multiple suggestions don't clobber each other.
 
 ### After each cycle
 

@@ -148,3 +148,6 @@ endpoint](https://freesound.org/docs/api/resources_apiv2.html#similar-sounds-1)
 to find similar sounds based on an initial random sound.
 * Fix the 4x4 sample grid layout.  The grid should display 16 samples
   (4 rows, 4 columns) but may only be showing 3 rows (4x3).
+* Replace the Unicode play/pause icons (▶/⏸) in the play/pause buttons
+  with SVGs for consistent rendering across platforms and perfect
+  centering in the circular button.
