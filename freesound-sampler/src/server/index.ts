@@ -6,7 +6,7 @@ import path from "path";
 import cors from "cors";
 import axios from "axios";
 import * as fsPromises from "fs/promises";
-const archiver = require("archiver");
+import { exec } from "child_process";
 import {
   searchSounds,
   downloadSound,
@@ -117,22 +117,29 @@ app.get("/api/download-zip", async (_req: Request, res: Response) => {
       return res.status(404).json({ message: "No samples available to download." });
     }
 
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader("Content-Disposition", 'attachment; filename="freesound-samples.zip"');
+    const zipFile = path.join(samplesDir, "..", "samples.zip");
+    const zipPath = path.resolve(zipFile);
 
-    const archive = archiver("zip", { zlib: { level: 9 } });
-    archive.on("error", (err: Error) => {
-      console.error("Archive error:", err);
-      res.status(500).end();
+    await new Promise<void>((resolve, reject) => {
+      exec(`cd "${samplesDir}" && zip -j "${zipPath}" *.wav`, (error) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
     });
 
-    archive.pipe(res);
-    for (const file of wavFiles) {
-      archive.file(path.join(samplesDir, file), { name: file });
-    }
-    await archive.finalize();
-  } catch (error) {
-    console.error("Error creating zip:", error);
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", 'attachment; filename="freesound-samples.zip"');
+    res.sendFile(zipPath, (err) => {
+      if (err) {
+        console.error("Send file error:", err);
+      }
+      fsPromises.unlink(zipPath).catch(() => {});
+    });
+  } catch (_error) {
+    console.error("Error creating zip:", _error);
     res.status(500).json({ message: "Failed to create zip archive." });
   }
 });
