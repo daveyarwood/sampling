@@ -175,8 +175,13 @@ app.get("/api/wikipedia-words", async (_req: Request, res: Response) => {
     const m = String(now.getMonth() + 1).padStart(2, "0");
     const d = String(now.getDate()).padStart(2, "0");
 
+    const wikiHeaders = {
+      headers: { "User-Agent": "FreesoundSampler/1.0 (https://github.com/daveyarwood/sampling)" },
+    };
+
     const feedResp = await axios.get(
       `https://en.wikipedia.org/api/rest_v1/feed/featured/${y}/${m}/${d}`,
+      wikiHeaders,
     );
     const title = feedResp.data.tfa?.titles?.normalized;
     if (!title) {
@@ -185,6 +190,7 @@ app.get("/api/wikipedia-words", async (_req: Request, res: Response) => {
 
     const summaryResp = await axios.get(
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+      wikiHeaders,
     );
     const extract = summaryResp.data.extract as string;
     const words = extract
@@ -200,7 +206,8 @@ app.get("/api/wikipedia-words", async (_req: Request, res: Response) => {
       searchWords: shuffled.slice(0, 4),
       allWords: shuffled.slice(0, 20),
     });
-  } catch (_error) {
+  } catch (err) {
+    console.error("Wikipedia words error:", err);
     res.status(500).json({ message: "Failed to fetch Wikipedia article." });
   }
 });
@@ -213,6 +220,7 @@ const fetchWikipediaTitle = async (): Promise<string | null> => {
     const d = String(now.getDate()).padStart(2, "0");
     const response = await axios.get(
       `https://en.wikipedia.org/api/rest_v1/feed/featured/${y}/${m}/${d}`,
+      { headers: { "User-Agent": "FreesoundSampler/1.0" } },
     );
     return response.data.tfa?.titles?.normalized || null;
   } catch (_error) {
