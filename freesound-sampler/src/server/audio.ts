@@ -58,7 +58,7 @@ export const processAudioFile = async (
     const maxStartTime = duration - SAMPLE_LENGTH_S;
     const randomStartTime = Math.random() * maxStartTime;
 
-    const indexStr = String(startIndex + i).padStart(2, "0");
+    const indexStr = String(startIndex + i + 1).padStart(2, "0");
     const outputFileName = `${indexStr}-${toKebabCase(soundName)}.wav`;
     const outputFilePath = path.join(outputDir, outputFileName);
     const relativeUrl = `/samples/${outputFileName}`;
