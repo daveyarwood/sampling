@@ -24,7 +24,7 @@ const readToken = async (): Promise<TokenData | null> => {
   try {
     const data = await fsPromises.readFile(TOKEN_FILE_PATH, 'utf-8');
     return JSON.parse(data);
-  } catch (error) {
+  } catch (_error) {
     return null; // File doesn't exist or is invalid
   }
 };
@@ -38,7 +38,7 @@ export const hasToken = (): boolean => {
     // Use synchronous check for the initial auth status endpoint
     require('fs').accessSync(TOKEN_FILE_PATH);
     return true;
-  } catch (error) {
+  } catch (_error) {
     return false;
   }
 };
