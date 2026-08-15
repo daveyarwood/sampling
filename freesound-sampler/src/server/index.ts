@@ -61,9 +61,7 @@ app.get("/api/random-samples", async (req: Request, res: Response) => {
 
   try {
     const termsParam = req.query.terms as string | undefined;
-    const searchTerms: string[] = termsParam
-      ? JSON.parse(termsParam)
-      : Array.from({ length: 4 }, () => getRandomWord());
+    const searchTerms: string[] = termsParam ? JSON.parse(termsParam) : await generateSearchTerms();
 
     const soundsToProcess: Sound[] = [];
     for (const term of searchTerms) {
@@ -169,6 +167,30 @@ app.get("/api/download-zip", async (_req: Request, res: Response) => {
 app.get("/api/random-word", (_req: Request, res: Response) => {
   res.json({ word: getRandomWord() });
 });
+
+const fetchWikipediaTitle = async (): Promise<string | null> => {
+  try {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    const response = await axios.get(
+      `https://en.wikipedia.org/api/rest_v1/feed/featured/${y}/${m}/${d}`,
+    );
+    return response.data.tfa?.titles?.normalized || null;
+  } catch (_error) {
+    return null;
+  }
+};
+
+const generateSearchTerms = async (): Promise<string[]> => {
+  const wikiTitle = await fetchWikipediaTitle();
+  const terms = Array.from({ length: 4 }, () => getRandomWord());
+  if (wikiTitle) {
+    terms[0] = wikiTitle;
+  }
+  return terms;
+};
 
 const DICT_PATH = "/usr/share/dict/words";
 let cachedWords: string[] = [];

@@ -135,8 +135,6 @@ freesound-sampler/
   samples come from the same original long sound.
 * Allow the user to select which samples to replace, and then click the "get new
   samples" button to replace them.
-* Another interesting idea is fetch the daily featured Wikipedia article
-  title and use that as a search term to get more eclectic sounds.
 * Try using the [Similar Sounds
 endpoint](https://freesound.org/docs/api/resources_apiv2.html#similar-sounds-1)
 to find similar sounds based on an initial random sound.
