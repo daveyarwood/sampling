@@ -195,8 +195,15 @@ app.get("/api/wikipedia-words", async (_req: Request, res: Response) => {
       `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
       wikiHeaders,
     );
-    const extract = summaryResp.data.extract as string;
-    const words = extract
+    const { extract, thumbnail, content_urls } = summaryResp.data as {
+      extract: string;
+      thumbnail?: { source: string };
+      content_urls: { desktop: { page: string } };
+    };
+    const articleUrl = content_urls?.desktop?.page;
+    const imageUrl = thumbnail?.source;
+
+    const words = (extract as string)
       .toLowerCase()
       .replace(/[^a-z\s]/g, "")
       .split(/\s+/)
@@ -206,6 +213,8 @@ app.get("/api/wikipedia-words", async (_req: Request, res: Response) => {
     const shuffled = words.sort(() => 0.5 - Math.random());
     res.json({
       title,
+      url: articleUrl,
+      imageUrl,
       searchWords: shuffled.slice(0, 4),
       allWords: shuffled.slice(0, 20),
     });

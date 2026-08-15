@@ -40,6 +40,8 @@ const SampleGrid = () => {
   const [currentlyPlaying, setCurrentlyPlaying] = useState<number | null>(null);
   const [searchTerms, setSearchTerms] = useState<string[]>(["", "", "", ""]);
   const [wikiTitle, setWikiTitle] = useState<string | null>(null);
+  const [wikiUrl, setWikiUrl] = useState<string | null>(null);
+  const [wikiImageUrl, setWikiImageUrl] = useState<string | null>(null);
   const [wikiWords, setWikiWords] = useState<string[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
   const audioRefs = useRef<Map<number, HTMLAudioElement>>(new Map());
@@ -163,6 +165,8 @@ const SampleGrid = () => {
       if (response.ok) {
         const data = await response.json();
         setWikiTitle(data.title);
+        setWikiUrl(data.url || null);
+        setWikiImageUrl(data.imageUrl || null);
         setWikiWords(data.allWords || []);
         setSearchTerms(data.searchWords || ["", "", "", ""]);
       }
@@ -246,7 +250,16 @@ const SampleGrid = () => {
 
       {wikiTitle && (
         <div className="wiki-display">
-          <span className="wiki-title">{wikiTitle}</span>
+          {wikiImageUrl && <img src={wikiImageUrl} alt={wikiTitle} className="wiki-image" />}
+          <span className="wiki-title">
+            {wikiUrl ? (
+              <a href={wikiUrl} target="_blank" rel="noopener" className="wiki-link">
+                {wikiTitle}
+              </a>
+            ) : (
+              wikiTitle
+            )}
+          </span>
           {wikiWords.length > 0 && <span className="wiki-words">{wikiWords.join(", ")}</span>}
         </div>
       )}
