@@ -166,6 +166,10 @@ app.get("/api/download-zip", async (_req: Request, res: Response) => {
   }
 });
 
+app.get("/api/random-word", (_req: Request, res: Response) => {
+  res.json({ word: getRandomWord() });
+});
+
 const DICT_PATH = "/usr/share/dict/words";
 let cachedWords: string[] = [];
 

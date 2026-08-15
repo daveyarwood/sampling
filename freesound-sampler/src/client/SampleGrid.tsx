@@ -8,7 +8,16 @@ interface Sample {
   freesoundUrl: string;
 }
 
-const randomTerm = (): string => {
+const fetchRandomWord = async (): Promise<string> => {
+  try {
+    const response = await fetch("/api/random-word");
+    if (response.ok) {
+      const data = await response.json();
+      return data.word;
+    }
+  } catch (_error) {
+    // fall back to default
+  }
   const fallbacks = [
     "texture",
     "ambient",
@@ -139,9 +148,10 @@ const SampleGrid = () => {
     setSearchTerms(next);
   };
 
-  const handleDiceRoll = (index: number) => {
+  const handleDiceRoll = async (index: number) => {
+    const word = await fetchRandomWord();
     const next = [...searchTerms];
-    next[index] = randomTerm();
+    next[index] = word;
     setSearchTerms(next);
   };
 
