@@ -142,3 +142,42 @@ button {
   opacity: 0.5;
   cursor: default;
 }
+
+.wiki-display {
+  text-align: center;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.wiki-title {
+  display: block;
+  font-size: 14px;
+  color: #6a3;
+}
+
+.wiki-words {
+  display: block;
+  font-size: 11px;
+  color: #888;
+  max-width: 800px;
+  margin: 4px auto 0;
+}
+
+.wiki-button {
+  background-color: #555;
+  color: white;
+  border: 1px solid #777;
+  border-radius: 3px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  margin: 4px auto;
+}
+
+.wiki-button:hover {
+  background-color: #666;
+}
+
+.wiki-button:disabled {
+  opacity: 0.5;
+}

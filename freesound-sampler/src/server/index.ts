@@ -168,6 +168,43 @@ app.get("/api/random-word", (_req: Request, res: Response) => {
   res.json({ word: getRandomWord() });
 });
 
+app.get("/api/wikipedia-words", async (_req: Request, res: Response) => {
+  try {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+
+    const feedResp = await axios.get(
+      `https://en.wikipedia.org/api/rest_v1/feed/featured/${y}/${m}/${d}`,
+    );
+    const title = feedResp.data.tfa?.titles?.normalized;
+    if (!title) {
+      return res.status(404).json({ message: "No featured article found for today." });
+    }
+
+    const summaryResp = await axios.get(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+    );
+    const extract = summaryResp.data.extract as string;
+    const words = extract
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, "")
+      .split(/\s+/)
+      .filter((w: string) => w.length >= 3 && w.length <= 8)
+      .filter((w: string, i: number, arr: string[]) => arr.indexOf(w) === i);
+
+    const shuffled = words.sort(() => 0.5 - Math.random());
+    res.json({
+      title,
+      searchWords: shuffled.slice(0, 4),
+      allWords: shuffled.slice(0, 20),
+    });
+  } catch (_error) {
+    res.status(500).json({ message: "Failed to fetch Wikipedia article." });
+  }
+});
+
 const fetchWikipediaTitle = async (): Promise<string | null> => {
   try {
     const now = new Date();

@@ -39,6 +39,8 @@ const SampleGrid = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState<number | null>(null);
   const [searchTerms, setSearchTerms] = useState<string[]>(["", "", "", ""]);
+  const [wikiTitle, setWikiTitle] = useState<string | null>(null);
+  const [wikiWords, setWikiWords] = useState<string[]>([]);
   const abortControllerRef = useRef<AbortController | null>(null);
   const audioRefs = useRef<Map<number, HTMLAudioElement>>(new Map());
 
@@ -155,6 +157,20 @@ const SampleGrid = () => {
     setSearchTerms(next);
   };
 
+  const handleWikipedia = async () => {
+    try {
+      const response = await fetch("/api/wikipedia-words");
+      if (response.ok) {
+        const data = await response.json();
+        setWikiTitle(data.title);
+        setWikiWords(data.allWords || []);
+        setSearchTerms(data.searchWords || ["", "", "", ""]);
+      }
+    } catch (_error) {
+      // silently fail
+    }
+  };
+
   const rows = [0, 1, 2, 3];
 
   const renderPad = (sample: Sample, index: number) => (
@@ -228,7 +244,17 @@ const SampleGrid = () => {
     <div>
       <h1>Freesound Sampler</h1>
 
+      {wikiTitle && (
+        <div className="wiki-display">
+          <span className="wiki-title">{wikiTitle}</span>
+          {wikiWords.length > 0 && <span className="wiki-words">{wikiWords.join(", ")}</span>}
+        </div>
+      )}
+
       <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+        <button onClick={handleWikipedia} disabled={loading} className="wiki-button">
+          Use Wikipedia
+        </button>
         <button onClick={() => fetchSamples()} disabled={loading}>
           {loading ? "Loading..." : "Get New Samples"}
         </button>
