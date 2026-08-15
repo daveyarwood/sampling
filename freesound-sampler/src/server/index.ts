@@ -52,7 +52,7 @@ app.post("/api/auth/exchange-code", async (req: Request, res: Response) => {
 
 // --- SAMPLING ENDPOINT ---
 
-app.get("/api/random-samples", async (_req: Request, res: Response) => {
+app.get("/api/random-samples", async (req: Request, res: Response) => {
   if (!hasToken()) {
     return res
       .status(401)
@@ -60,21 +60,23 @@ app.get("/api/random-samples", async (_req: Request, res: Response) => {
   }
 
   try {
-    let foundSounds: Sound[] = [];
-    for (let attempt = 0; attempt < 5 && foundSounds.length === 0; attempt++) {
-      const randomWord = getRandomWord();
-      console.log(`Searching Freesound for: "${randomWord}" (attempt ${attempt + 1})`);
-      foundSounds = await searchSounds(randomWord);
+    const termsParam = req.query.terms as string | undefined;
+    const searchTerms: string[] = termsParam
+      ? JSON.parse(termsParam)
+      : Array.from({ length: 4 }, () => getRandomWord());
+
+    const soundsToProcess: Sound[] = [];
+    for (const term of searchTerms) {
+      console.log(`Searching Freesound for: "${term}"`);
+      const results = await searchSounds(term);
+      if (results.length > 0) {
+        soundsToProcess.push(results[0]);
+      }
     }
 
-    if (foundSounds.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No suitable sounds found on Freesound after 5 attempts." });
+    if (soundsToProcess.length === 0) {
+      return res.status(404).json({ message: "No suitable sounds found on Freesound." });
     }
-
-    const numSourceSoundsToProcess = Math.min(foundSounds.length, 4);
-    const soundsToProcess = foundSounds.slice(0, numSourceSoundsToProcess);
 
     const samplesDir = path.join(__dirname, "../../public/samples");
     const existingFiles = await fsPromises.readdir(samplesDir);
@@ -102,7 +104,7 @@ app.get("/api/random-samples", async (_req: Request, res: Response) => {
     ).flat();
 
     const finalSamples = allSamples.slice(0, 16);
-    res.json({ samples: finalSamples });
+    res.json({ samples: finalSamples, terms: searchTerms.slice(0, soundsToProcess.length) });
   } catch (error) {
     console.error("Error in /api/random-samples:", error);
     // Check if it's an expired token error
