@@ -59,7 +59,7 @@ app.get("/api/random-samples", async (_req: Request, res: Response) => {
   }
 
   try {
-    const randomWord = searchWords[Math.floor(Math.random() * searchWords.length)];
+    const randomWord = getRandomWord();
     console.log(`Searching Freesound for: "${randomWord}"`);
 
     const foundSounds = await searchSounds(randomWord);
@@ -158,19 +158,37 @@ app.get("/api/download-zip", async (_req: Request, res: Response) => {
   }
 });
 
-// A simple word list for generating random search queries
-const searchWords = [
-  "texture",
-  "ambient",
-  "rhythmic",
-  "noise",
-  "field",
-  "synth",
-  "vocal",
-  "percussion",
-  "drone",
-  "melody",
-];
+const DICT_PATH = "/usr/share/dict/words";
+let cachedWords: string[] = [];
+
+const loadWords = async (): Promise<void> => {
+  try {
+    const data = await fsPromises.readFile(DICT_PATH, "utf-8");
+    cachedWords = data
+      .split("\n")
+      .map((w) => w.trim())
+      .filter((w) => /^[a-z]{3,8}$/.test(w));
+    console.log(`Loaded ${cachedWords.length} words from ${DICT_PATH}`);
+  } catch (_error) {
+    console.warn(`Could not read ${DICT_PATH}, using fallback word list`);
+    cachedWords = [
+      "texture",
+      "ambient",
+      "rhythmic",
+      "noise",
+      "field",
+      "synth",
+      "vocal",
+      "percussion",
+      "drone",
+      "melody",
+    ];
+  }
+};
+
+const getRandomWord = (): string => {
+  return cachedWords[Math.floor(Math.random() * cachedWords.length)];
+};
 
 // --- STATIC FILE SERVING ---
 
@@ -191,6 +209,8 @@ if (process.env.NODE_ENV === "production") {
 
 app.listen(port, async () => {
   console.log(`Server listening on port ${port}`);
+
+  await loadWords();
 
   // Cleanup public/samples directory on startup
   const samplesDir = path.join(__dirname, "../../public/samples");

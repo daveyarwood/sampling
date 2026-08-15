@@ -135,8 +135,6 @@ freesound-sampler/
   samples come from the same original long sound.
 * Allow the user to select which samples to replace, and then click the "get new
   samples" button to replace them.
-* Improve the way we generate random search terms. We could use
-  `/usr/share/dict/words` or a similar word list to get more varied terms.
 * Another interesting idea is fetch the daily featured Wikipedia article
   title and use that as a search term to get more eclectic sounds.
 * Try using the [Similar Sounds
