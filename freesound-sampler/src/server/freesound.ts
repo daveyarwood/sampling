@@ -98,7 +98,7 @@ export const searchSounds = async (query: string): Promise<Sound[]> => {
     query,
     token: CLIENT_SECRET,
     fields: "id,name,download",
-    filter: 'duration:[30 TO 180] license:"Creative Commons 0"',
+    filter: 'duration:[40 TO 180] license:"Creative Commons 0"',
     sort: "rating_desc",
     page_size: 10,
   };
