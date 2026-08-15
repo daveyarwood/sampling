@@ -70,13 +70,21 @@ app.get("/api/random-samples", async (_req: Request, res: Response) => {
     const numSourceSoundsToProcess = Math.min(foundSounds.length, 4);
     const soundsToProcess = foundSounds.slice(0, numSourceSoundsToProcess);
 
+    const samplesDir = path.join(__dirname, "../../public/samples");
+    const existingFiles = await fsPromises.readdir(samplesDir);
+    await Promise.all(
+      existingFiles
+        .filter((f) => f.endsWith(".wav"))
+        .map((f) => fsPromises.unlink(path.join(samplesDir, f))),
+    );
+
     const allSamples = (
       await Promise.all(
-        soundsToProcess.map(async (sound) => {
+        soundsToProcess.map(async (sound, idx) => {
           console.log(`Downloading sound: ${sound.name} (ID: ${sound.id})`);
           const downloadedFilePath = await downloadSound(sound);
           console.log(`Processing audio file: ${downloadedFilePath}`);
-          const urls = await processAudioFile(downloadedFilePath);
+          const urls = await processAudioFile(downloadedFilePath, sound.name, idx * 4);
           return urls.map((url) => ({
             url,
             soundName: sound.name,

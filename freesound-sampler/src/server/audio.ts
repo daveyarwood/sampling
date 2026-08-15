@@ -27,8 +27,18 @@ const getAudioDuration = (filePath: string): Promise<number> => {
  * @param inputFilePath The path to the input audio file.
  * @returns A promise that resolves to an array of relative paths (URLs) of the generated samples.
  */
+const toKebabCase = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 25);
+};
+
 export const processAudioFile = async (
   inputFilePath: string,
+  soundName: string,
+  startIndex: number,
 ): Promise<string[]> => {
   const sampleUrls: string[] = [];
   const duration = await getAudioDuration(inputFilePath);
@@ -48,7 +58,8 @@ export const processAudioFile = async (
     const maxStartTime = duration - SAMPLE_LENGTH_S;
     const randomStartTime = Math.random() * maxStartTime;
 
-    const outputFileName = `sample-${Date.now()}-${i}.wav`;
+    const indexStr = String(startIndex + i).padStart(2, "0");
+    const outputFileName = `${indexStr}-${toKebabCase(soundName)}.wav`;
     const outputFilePath = path.join(outputDir, outputFileName);
     const relativeUrl = `/samples/${outputFileName}`;
 
@@ -57,9 +68,7 @@ export const processAudioFile = async (
       const command = `sox --norm "${inputFilePath}" "${outputFilePath}" trim ${randomStartTime} ${SAMPLE_LENGTH_S}`;
       exec(command, (error, _stdout, stderr) => {
         if (error) {
-          console.error(
-            `Error processing audio file ${inputFilePath}: ${stderr}`,
-          );
+          console.error(`Error processing audio file ${inputFilePath}: ${stderr}`);
           return reject(error);
         }
         resolve();
