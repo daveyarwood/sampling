@@ -140,3 +140,5 @@ freesound-sampler/
 * Try using the [Similar Sounds
 endpoint](https://freesound.org/docs/api/resources_apiv2.html#similar-sounds-1)
 to find similar sounds based on an initial random sound.
+* Show editable search terms in the UI, one per row, with a dice button
+  to randomize individual terms.
