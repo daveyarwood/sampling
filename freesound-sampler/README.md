@@ -131,7 +131,6 @@ freesound-sampler/
   "Loading sample 3 of 16...") while the samples are downloading.
 * When a sample is played, highlight its border or background color to give
   visual feedback about which sample is currently playing.
-* When a sample is played, stop any other samples that are currently playing.
 * Display information about each sound (title, author, etc.) when hovering.
 * Remove "Sample X" labels under each audio clip. Instead, display a short
   indicator of which Freesound sound it is.

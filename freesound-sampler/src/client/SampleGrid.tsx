@@ -77,6 +77,13 @@ const SampleGrid = () => {
       audio.pause();
       setCurrentlyPlaying(null);
     } else {
+      if (currentlyPlaying !== null) {
+        const currentAudio = audioRefs.current.get(currentlyPlaying);
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        }
+      }
       audio.play();
       setCurrentlyPlaying(index);
     }
