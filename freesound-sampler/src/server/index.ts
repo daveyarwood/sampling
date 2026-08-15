@@ -65,6 +65,9 @@ app.get("/api/random-samples", async (req: Request, res: Response) => {
 
     const soundsToProcess: Sound[] = [];
     for (const term of searchTerms) {
+      if (soundsToProcess.length >= 4) {
+        break;
+      }
       console.log(`Searching Freesound for: "${term}"`);
       const results = await searchSounds(term);
       if (results.length > 0) {
@@ -230,7 +233,7 @@ const fetchWikipediaTitle = async (): Promise<string | null> => {
 
 const generateSearchTerms = async (): Promise<string[]> => {
   const wikiTitle = await fetchWikipediaTitle();
-  const terms = Array.from({ length: 4 }, () => getRandomWord());
+  const terms = Array.from({ length: 8 }, () => getRandomWord());
   if (wikiTitle) {
     terms[0] = wikiTitle;
   }
