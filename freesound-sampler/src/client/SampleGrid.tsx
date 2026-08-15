@@ -125,7 +125,28 @@ const SampleGrid = () => {
                 onClick={() => handlePlayPause(index)}
                 aria-label={currentlyPlaying === index ? "Pause" : "Play"}
               >
-                {currentlyPlaying === index ? "\u23F8" : "\u25B6"}
+                {currentlyPlaying === index ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="28"
+                    height="28"
+                    fill="currentColor"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    <rect x="5" y="3" width="5" height="18" />
+                    <rect x="14" y="3" width="5" height="18" />
+                  </svg>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="28"
+                    height="28"
+                    fill="currentColor"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    <polygon points="7,3 22,12 7,21" />
+                  </svg>
+                )}
               </button>
               <h3>{sample.name}</h3>
             </div>
