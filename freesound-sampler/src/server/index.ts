@@ -104,7 +104,7 @@ app.get("/api/random-samples", async (req: Request, res: Response) => {
     ).flat();
 
     const finalSamples = allSamples.slice(0, 16);
-    res.json({ samples: finalSamples, terms: searchTerms.slice(0, soundsToProcess.length) });
+    res.json({ samples: finalSamples, terms: searchTerms.slice(0, 4) });
   } catch (error) {
     console.error("Error in /api/random-samples:", error);
     // Check if it's an expired token error
