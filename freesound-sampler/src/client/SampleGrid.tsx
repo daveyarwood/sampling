@@ -112,6 +112,7 @@ const SampleGrid = () => {
 
   useEffect(() => {
     fetchSamples();
+    handleWikipedia();
 
     return () => {
       if (abortControllerRef.current) {
@@ -265,9 +266,6 @@ const SampleGrid = () => {
       )}
 
       <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-        <button onClick={handleWikipedia} disabled={loading} className="wiki-button">
-          Use Wikipedia
-        </button>
         <button onClick={() => fetchSamples()} disabled={loading}>
           {loading ? "Loading..." : "Get New Samples"}
         </button>
