@@ -128,8 +128,8 @@ const SampleGrid = () => {
                 {currentlyPlaying === index ? (
                   <svg
                     viewBox="0 0 24 24"
-                    width="28"
-                    height="28"
+                    width="22"
+                    height="22"
                     fill="currentColor"
                     style={{ pointerEvents: "none" }}
                   >
@@ -139,8 +139,8 @@ const SampleGrid = () => {
                 ) : (
                   <svg
                     viewBox="0 0 24 24"
-                    width="28"
-                    height="28"
+                    width="22"
+                    height="22"
                     fill="currentColor"
                     style={{ pointerEvents: "none" }}
                   >
