@@ -96,9 +96,16 @@ const SampleGrid = () => {
   return (
     <div>
       <h1>Freesound Sampler</h1>
-      <button onClick={fetchSamples} disabled={loading}>
-        {loading ? "Loading..." : "Get New Samples"}
-      </button>
+      <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+        <button onClick={fetchSamples} disabled={loading}>
+          {loading ? "Loading..." : "Get New Samples"}
+        </button>
+        {samples.length > 0 && !loading && (
+          <a href="/api/download-zip" download="freesound-samples.zip" className="download-button">
+            Download ZIP
+          </a>
+        )}
+      </div>
 
       {error && <p style={{ color: "red", textAlign: "center" }}>Error: {error}</p>}
 

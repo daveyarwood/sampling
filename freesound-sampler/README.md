@@ -136,7 +136,6 @@ freesound-sampler/
   indicator of which Freesound sound it is.
 * Consider using colors or other visual indicators (emoji?) to show which
   samples come from the same original long sound.
-* Provide a button to download all 16 samples as a zip file.
 * Allow the user to select which samples to replace, and then click the "get new
   samples" button to replace them.
 * Improve the way we generate random search terms. We could use
