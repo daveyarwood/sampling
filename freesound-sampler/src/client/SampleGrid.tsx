@@ -179,7 +179,7 @@ const SampleGrid = () => {
   const rows = [0, 1, 2, 3];
 
   const renderPad = (sample: Sample, index: number) => (
-    <div key={index} className="pad">
+    <div key={index} className={`pad ${currentlyPlaying === index ? "playing" : ""}`}>
       <audio
         ref={(el) => {
           if (el) {
@@ -280,7 +280,12 @@ const SampleGrid = () => {
 
       <div className="grid-container">
         {loading ? (
-          <p style={{ gridColumn: "1 / -1" }}>Loading samples...</p>
+          <div className="loading-container" style={{ gridColumn: "1 / -1" }}>
+            <p className="loading-text">Fetching and processing samples...</p>
+            <div className="progress-bar">
+              <div className="progress-bar-fill" />
+            </div>
+          </div>
         ) : samples.length > 0 ? (
           rows.map((row) => {
             const rowSamples = samples.slice(row * 4, row * 4 + 4);

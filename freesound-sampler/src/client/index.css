@@ -38,6 +38,12 @@ h1 {
   font-size: 12px;
 }
 
+.pad.playing {
+  background-color: #2a3a2a;
+  border-color: #3a3;
+  box-shadow: 0 0 8px rgba(58, 170, 58, 0.3);
+}
+
 button {
   display: block;
   margin: 10px auto;
@@ -198,4 +204,47 @@ button {
 
 .wiki-button:disabled {
   opacity: 0.5;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.loading-text {
+  color: #aaa;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.progress-bar {
+  width: 200px;
+  height: 6px;
+  background-color: #333;
+  border-radius: 3px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  width: 30%;
+  background-color: #6a3;
+  border-radius: 3px;
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    width: 10%;
+    margin-left: 0;
+  }
+  50% {
+    width: 40%;
+    margin-left: 40%;
+  }
+  100% {
+    width: 10%;
+    margin-left: 90%;
+  }
 }

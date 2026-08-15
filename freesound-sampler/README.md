@@ -127,10 +127,6 @@ freesound-sampler/
 
 ## TODO
 
-* Provide incremental feedback in the form of a progress bar (e.g.,)
-  "Loading sample 3 of 16...") while the samples are downloading.
-* When a sample is played, highlight its border or background color to give
-  visual feedback about which sample is currently playing.
 * Consider using colors or other visual indicators (emoji?) to show which
   samples come from the same original long sound.
 * Allow the user to select which samples to replace, and then click the "get new
