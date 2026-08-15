@@ -14,6 +14,7 @@ import {
   hasToken,
   refreshAccessToken,
 } from "./freesound";
+import type { Sound } from "./freesound";
 import { processAudioFile } from "./audio";
 
 const app = express();
@@ -59,12 +60,17 @@ app.get("/api/random-samples", async (_req: Request, res: Response) => {
   }
 
   try {
-    const randomWord = getRandomWord();
-    console.log(`Searching Freesound for: "${randomWord}"`);
+    let foundSounds: Sound[] = [];
+    for (let attempt = 0; attempt < 5 && foundSounds.length === 0; attempt++) {
+      const randomWord = getRandomWord();
+      console.log(`Searching Freesound for: "${randomWord}" (attempt ${attempt + 1})`);
+      foundSounds = await searchSounds(randomWord);
+    }
 
-    const foundSounds = await searchSounds(randomWord);
     if (foundSounds.length === 0) {
-      return res.status(404).json({ message: "No suitable sounds found on Freesound." });
+      return res
+        .status(404)
+        .json({ message: "No suitable sounds found on Freesound after 5 attempts." });
     }
 
     const numSourceSoundsToProcess = Math.min(foundSounds.length, 4);

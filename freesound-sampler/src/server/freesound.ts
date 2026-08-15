@@ -86,7 +86,7 @@ export const refreshAccessToken = async (): Promise<void> => {
 
 // --- API Resource Functions ---
 
-interface Sound {
+export interface Sound {
   id: number;
   name: string;
   download: string;
