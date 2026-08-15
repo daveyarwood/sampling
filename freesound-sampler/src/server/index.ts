@@ -6,7 +6,7 @@ import path from "path";
 import cors from "cors";
 import axios from "axios";
 import * as fsPromises from "fs/promises";
-import archiver = require("archiver");
+const archiver = require("archiver");
 import {
   searchSounds,
   downloadSound,
