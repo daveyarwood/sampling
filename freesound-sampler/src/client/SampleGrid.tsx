@@ -147,33 +147,76 @@ const SampleGrid = () => {
 
   const rows = [0, 1, 2, 3];
 
+  const renderPad = (sample: Sample, index: number) => (
+    <div key={index} className="pad">
+      <audio
+        ref={(el) => {
+          if (el) {
+            audioRefs.current.set(index, el);
+          } else {
+            audioRefs.current.delete(index);
+          }
+        }}
+        src={sample.url}
+        onEnded={() => handleAudioEnded(index)}
+        style={{ display: "none" }}
+      />
+      <button
+        className={`play-button ${currentlyPlaying === index ? "playing" : ""}`}
+        onClick={() => handlePlayPause(index)}
+        aria-label={currentlyPlaying === index ? "Pause" : "Play"}
+      >
+        {currentlyPlaying === index ? (
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="currentColor"
+            style={{ pointerEvents: "none" }}
+          >
+            <rect x="5" y="3" width="5" height="18" />
+            <rect x="14" y="3" width="5" height="18" />
+          </svg>
+        ) : (
+          <svg
+            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            fill="currentColor"
+            style={{ pointerEvents: "none" }}
+          >
+            <polygon points="7,3 22,12 7,21" />
+          </svg>
+        )}
+      </button>
+      <h3 title={`${sample.soundName} (ID: ${sample.soundId})`}>{sample.soundName}</h3>
+    </div>
+  );
+
+  const renderSearchTermCell = (row: number) => (
+    <div key={`term-${row}`} className="search-term-cell">
+      <input
+        type="text"
+        className="search-term-input"
+        value={searchTerms[row] || ""}
+        onChange={(e) => handleTermChange(row, e.target.value)}
+        placeholder="search"
+        disabled={loading}
+      />
+      <button
+        className="dice-button"
+        onClick={() => handleDiceRoll(row)}
+        disabled={loading}
+        aria-label={`Randomize search term for row ${row + 1}`}
+      >
+        &#x1F3B2;
+      </button>
+    </div>
+  );
+
   return (
     <div>
       <h1>Freesound Sampler</h1>
-      <div className="search-terms">
-        {rows.map((row) => (
-          <div key={row} className="search-term-row">
-            <span className="search-term-label">Row {row + 1}:</span>
-            <input
-              type="text"
-              className="search-term-input"
-              value={searchTerms[row] || ""}
-              onChange={(e) => handleTermChange(row, e.target.value)}
-              placeholder="search term"
-              disabled={loading}
-            />
-            <button
-              className="dice-button"
-              onClick={() => handleDiceRoll(row)}
-              disabled={loading}
-              aria-label={`Randomize search term for row ${row + 1}`}
-              title={`Randomize search term for row ${row + 1}`}
-            >
-              &#x1F3B2;
-            </button>
-          </div>
-        ))}
-      </div>
 
       <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
         <button onClick={() => fetchSamples()} disabled={loading}>
@@ -190,55 +233,19 @@ const SampleGrid = () => {
 
       <div className="grid-container">
         {loading ? (
-          <p>Loading samples...</p>
+          <p style={{ gridColumn: "1 / -1" }}>Loading samples...</p>
         ) : samples.length > 0 ? (
-          samples.map((sample, index) => (
-            <div key={index} className="pad">
-              <audio
-                ref={(el) => {
-                  if (el) {
-                    audioRefs.current.set(index, el);
-                  } else {
-                    audioRefs.current.delete(index);
-                  }
-                }}
-                src={sample.url}
-                onEnded={() => handleAudioEnded(index)}
-                style={{ display: "none" }}
-              />
-              <button
-                className={`play-button ${currentlyPlaying === index ? "playing" : ""}`}
-                onClick={() => handlePlayPause(index)}
-                aria-label={currentlyPlaying === index ? "Pause" : "Play"}
-              >
-                {currentlyPlaying === index ? (
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="22"
-                    height="22"
-                    fill="currentColor"
-                    style={{ pointerEvents: "none" }}
-                  >
-                    <rect x="5" y="3" width="5" height="18" />
-                    <rect x="14" y="3" width="5" height="18" />
-                  </svg>
-                ) : (
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="22"
-                    height="22"
-                    fill="currentColor"
-                    style={{ pointerEvents: "none" }}
-                  >
-                    <polygon points="7,3 22,12 7,21" />
-                  </svg>
-                )}
-              </button>
-              <h3 title={`${sample.soundName} (ID: ${sample.soundId})`}>{sample.soundName}</h3>
-            </div>
-          ))
+          rows.map((row) => {
+            const rowSamples = samples.slice(row * 4, row * 4 + 4);
+            return [
+              renderSearchTermCell(row),
+              ...rowSamples.map((sample, i) => renderPad(sample, row * 4 + i)),
+            ];
+          })
         ) : (
-          !error && <p>Click "Get New Samples" to load some sounds!</p>
+          !error && (
+            <p style={{ gridColumn: "1 / -1" }}>Click "Get New Samples" to load some sounds!</p>
+          )
         )}
       </div>
     </div>
