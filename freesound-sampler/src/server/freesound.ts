@@ -1,17 +1,21 @@
-import axios from 'axios';
-import * as fsPromises from 'fs/promises';
-import * as fs from 'fs';
-import path from 'path';
-import * as os from 'os';
+import axios from "axios";
+import * as fsPromises from "fs/promises";
+import * as fs from "fs";
+import path from "path";
+import * as os from "os";
 
-const FREESOUND_API_URL = 'https://freesound.org/apiv2';
+const FREESOUND_API_URL = "https://freesound.org/apiv2";
 const CLIENT_ID = process.env.FREESOUND_CLIENT_ID;
 const CLIENT_SECRET = process.env.FREESOUND_CLIENT_SECRET;
-const TOKEN_FILE_PATH = path.join(__dirname, '..', '..', 'token.json');
+const TOKEN_FILE_PATH = path.join(__dirname, "..", "..", "token.json");
 
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  throw new Error('Freesound Client ID or Secret is not configured in the environment variables.');
-}
+const ensureCredentials = (): void => {
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    throw new Error(
+      "Freesound Client ID or Secret is not configured in the environment variables.",
+    );
+  }
+};
 
 interface TokenData {
   access_token: string;
@@ -22,7 +26,7 @@ interface TokenData {
 
 const readToken = async (): Promise<TokenData | null> => {
   try {
-    const data = await fsPromises.readFile(TOKEN_FILE_PATH, 'utf-8');
+    const data = await fsPromises.readFile(TOKEN_FILE_PATH, "utf-8");
     return JSON.parse(data);
   } catch (_error) {
     return null; // File doesn't exist or is invalid
@@ -30,13 +34,13 @@ const readToken = async (): Promise<TokenData | null> => {
 };
 
 const writeToken = async (tokenData: TokenData): Promise<void> => {
-  await fsPromises.writeFile(TOKEN_FILE_PATH, JSON.stringify(tokenData, null, 2), 'utf-8');
+  await fsPromises.writeFile(TOKEN_FILE_PATH, JSON.stringify(tokenData, null, 2), "utf-8");
 };
 
 export const hasToken = (): boolean => {
   try {
     // Use synchronous check for the initial auth status endpoint
-    require('fs').accessSync(TOKEN_FILE_PATH);
+    require("fs").accessSync(TOKEN_FILE_PATH);
     return true;
   } catch (_error) {
     return false;
@@ -46,23 +50,25 @@ export const hasToken = (): boolean => {
 // --- OAuth2 Logic ---
 
 export const exchangeCodeForToken = async (code: string): Promise<void> => {
+  ensureCredentials();
   const response = await axios.post(
     `${FREESOUND_API_URL}/oauth2/access_token/`,
     new URLSearchParams({
       client_id: CLIENT_ID!,
       client_secret: CLIENT_SECRET!,
-      grant_type: 'authorization_code',
+      grant_type: "authorization_code",
       code,
-    })
+    }),
   );
   await writeToken(response.data);
-  console.log('Successfully exchanged code for token and created token.json.');
+  console.log("Successfully exchanged code for token and created token.json.");
 };
 
 export const refreshAccessToken = async (): Promise<void> => {
+  ensureCredentials();
   const currentToken = await readToken();
   if (!currentToken || !currentToken.refresh_token) {
-    throw new Error('No refresh token available.');
+    throw new Error("No refresh token available.");
   }
 
   const response = await axios.post(
@@ -70,14 +76,13 @@ export const refreshAccessToken = async (): Promise<void> => {
     new URLSearchParams({
       client_id: CLIENT_ID!,
       client_secret: CLIENT_SECRET!,
-      grant_type: 'refresh_token',
+      grant_type: "refresh_token",
       refresh_token: currentToken.refresh_token,
-    })
+    }),
   );
   await writeToken(response.data);
-  console.log('Successfully refreshed access token.');
+  console.log("Successfully refreshed access token.");
 };
-
 
 // --- API Resource Functions ---
 
@@ -88,37 +93,40 @@ interface Sound {
 }
 
 export const searchSounds = async (query: string): Promise<Sound[]> => {
+  ensureCredentials();
   const searchParams = {
     query,
     token: CLIENT_SECRET,
-    fields: 'id,name,download',
+    fields: "id,name,download",
     filter: 'duration:[30 TO 180] license:"Creative Commons 0"',
-    sort: 'rating_desc',
+    sort: "rating_desc",
     page_size: 10,
   };
-  const response = await axios.get<{ results: Sound[] }>(`${FREESOUND_API_URL}/search/text/`, { params: searchParams });
+  const response = await axios.get<{ results: Sound[] }>(`${FREESOUND_API_URL}/search/text/`, {
+    params: searchParams,
+  });
   return response.data.results.sort(() => 0.5 - Math.random()).slice(0, 4);
 };
 
 export const downloadSound = async (sound: Sound): Promise<string> => {
   const tokenData = await readToken();
   if (!tokenData || !tokenData.access_token) {
-    throw new Error('Not authenticated. Access token is missing.');
+    throw new Error("Not authenticated. Access token is missing.");
   }
 
-  const tempDirPrefix = path.join(os.tmpdir(), 'freesound-');
+  const tempDirPrefix = path.join(os.tmpdir(), "freesound-");
   const uniqueTempDir = await fsPromises.mkdtemp(tempDirPrefix);
   const filePath = path.join(uniqueTempDir, `${sound.id}.mp3`);
 
   const response = await axios.get(sound.download, {
     headers: { Authorization: `Bearer ${tokenData.access_token}` },
-    responseType: 'stream',
+    responseType: "stream",
   });
 
   const writer = fs.createWriteStream(filePath);
   response.data.pipe(writer);
   return new Promise((resolve, reject) => {
-    writer.on('finish', () => resolve(filePath));
-    writer.on('error', reject);
+    writer.on("finish", () => resolve(filePath));
+    writer.on("error", reject);
   });
 };
