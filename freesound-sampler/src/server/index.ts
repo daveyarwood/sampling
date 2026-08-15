@@ -6,7 +6,7 @@ import path from "path";
 import cors from "cors";
 import axios from "axios";
 import * as fsPromises from "fs/promises";
-import archiver from "archiver";
+import archiver = require("archiver");
 import {
   searchSounds,
   downloadSound,
@@ -92,11 +92,9 @@ app.get("/api/random-samples", async (_req: Request, res: Response) => {
         await refreshAccessToken();
         // We don't retry the request automatically in this version to keep it simple.
         // We'll just tell the user to try again.
-        return res
-          .status(401)
-          .json({
-            message: "Token expired and has been refreshed. Please try your request again.",
-          });
+        return res.status(401).json({
+          message: "Token expired and has been refreshed. Please try your request again.",
+        });
       } catch (refreshError) {
         console.error("Failed to refresh token:", refreshError);
         return res
@@ -123,7 +121,7 @@ app.get("/api/download-zip", async (_req: Request, res: Response) => {
     res.setHeader("Content-Disposition", 'attachment; filename="freesound-samples.zip"');
 
     const archive = archiver("zip", { zlib: { level: 9 } });
-    archive.on("error", (err) => {
+    archive.on("error", (err: Error) => {
       console.error("Archive error:", err);
       res.status(500).end();
     });
