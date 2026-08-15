@@ -70,18 +70,24 @@ app.get("/api/random-samples", async (_req: Request, res: Response) => {
     const numSourceSoundsToProcess = Math.min(foundSounds.length, 4);
     const soundsToProcess = foundSounds.slice(0, numSourceSoundsToProcess);
 
-    const allSampleUrls = (
+    const allSamples = (
       await Promise.all(
         soundsToProcess.map(async (sound) => {
           console.log(`Downloading sound: ${sound.name} (ID: ${sound.id})`);
           const downloadedFilePath = await downloadSound(sound);
           console.log(`Processing audio file: ${downloadedFilePath}`);
-          return processAudioFile(downloadedFilePath);
+          const urls = await processAudioFile(downloadedFilePath);
+          return urls.map((url) => ({
+            url,
+            soundName: sound.name,
+            soundId: sound.id,
+            freesoundUrl: `https://freesound.org/people/Freesound/sounds/${sound.id}/`,
+          }));
         }),
       )
-    ).flat(); // Use flat to combine arrays of samples
+    ).flat();
 
-    const finalSamples = allSampleUrls.slice(0, 16);
+    const finalSamples = allSamples.slice(0, 16);
     res.json({ samples: finalSamples });
   } catch (error) {
     console.error("Error in /api/random-samples:", error);

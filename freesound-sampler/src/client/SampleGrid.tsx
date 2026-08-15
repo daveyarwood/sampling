@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 interface Sample {
   url: string;
   name: string;
+  soundName: string;
+  soundId: number;
+  freesoundUrl: string;
 }
 
 const SampleGrid = () => {
@@ -33,10 +36,18 @@ const SampleGrid = () => {
       }
 
       if (data.samples && Array.isArray(data.samples)) {
-        const formattedSamples: Sample[] = data.samples.map((url: string, index: number) => ({
-          url,
-          name: `Sample ${index + 1}`,
-        }));
+        const formattedSamples: Sample[] = data.samples.map(
+          (
+            item: { url: string; soundName: string; soundId: number; freesoundUrl: string },
+            index: number,
+          ) => ({
+            url: item.url,
+            name: `Sample ${index + 1}`,
+            soundName: item.soundName,
+            soundId: item.soundId,
+            freesoundUrl: item.freesoundUrl,
+          }),
+        );
         setSamples(formattedSamples);
       } else {
         setSamples([]);
@@ -155,7 +166,7 @@ const SampleGrid = () => {
                   </svg>
                 )}
               </button>
-              <h3>{sample.name}</h3>
+              <h3 title={`${sample.soundName} (ID: ${sample.soundId})`}>{sample.soundName}</h3>
             </div>
           ))
         ) : (
