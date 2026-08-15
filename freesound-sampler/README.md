@@ -129,9 +129,6 @@ freesound-sampler/
 
 * Provide incremental feedback in the form of a progress bar (e.g.,)
   "Loading sample 3 of 16...") while the samples are downloading.
-* Instead of rendering an `audio` element on the page, render a large ▶️ button
-  that turns into a ⏸️ button.  Thee audio element itself can be hidden. The
-  goal is to make it easier for the user to click to play.
 * When a sample is played, highlight its border or background color to give
   visual feedback about which sample is currently playing.
 * When a sample is played, stop any other samples that are currently playing.

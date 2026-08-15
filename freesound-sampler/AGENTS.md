@@ -58,9 +58,7 @@ Browser (Vite :5173) ──proxy──> Express (:3000)
 4. Run `npx oxlint` and `npx oxfmt` to verify code quality
 5. Manually verify the feature works in the browser
 6. Update the Lavish dashboard: remove completed item, add brief review notes if any
-7. Mark the item done in the README
-8. Run `npx oxlint` and `npx oxfmt` to verify code quality
-9. Commit all changes with a descriptive message and push: `git add -A && git commit -m "<message>" && git push`
+7. Mark the item done in the README and commit
 
 ## Lavish dashboard
 
